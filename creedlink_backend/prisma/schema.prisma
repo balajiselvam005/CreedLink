@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Skill {
+  id      String @id @default(uuid())
+  name    String
+  userId  String
+
+  user    User   @relation(fields: [userId], references: [id])
+}
+
+model Work {
+  id      String @id @default(uuid())
+  title   String
+  client  String
+  year    Int
+
+  userId  String
+  user    User @relation(fields: [userId], references: [id])
+}
+
+model Follow {
+  id           String @id @default(uuid())
+
+  followerId   String
+  followingId  String
+
+  follower     User @relation("Follower", fields: [followerId], references: [id])
+  following    User @relation("Following", fields: [followingId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([followerId, followingId])
+}
+
+model Rating {
+  id          String @id @default(uuid())
+  rating      Int
+  review      String?
+
+  raterId     String
+  receiverId  String
+  agreementId String
+
+  rater       User @relation("Rater", fields: [raterId], references: [id])
+  receiver    User @relation("ReceiverRating", fields: [receiverId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([agreementId, raterId])
+}
+
+model User {
+  id          String   @id @default(uuid())
+  avatar      String?
+  fullName    String?
+  username    String?  @unique
+  email       String   @unique
+  password    String
+  role        String?
+
+  bio         String?
+  location    String?
+
+  website     String?
+  twitter     String?
+  instagram   String?
+  portfolio   String?
+
+  skills   Skill[]
+  works    Work[]
+
+  followers  Follow[] @relation("Following")
+  following  Follow[] @relation("Follower")
+
+  ratingsReceived Rating[] @relation("ReceiverRating")
+  ratingsGiven    Rating[] @relation("Rater")
+
+  profileCompleted Boolean @default(false)
+
+  createdAt   DateTime @default(now())
+
+  agreementsSent     Agreement[] @relation("Sender")
+  agreementsReceived Agreement[] @relation("Receiver")
+}
+
+enum AgreementType {
+  LICENSE
+  COLLABORATION
+  REVENUE_SHARE
+  PARTNERSHIP
+}
+
+enum AgreementStatus {
+  DRAFT
+  SENT
+  PENDING
+  COMPLETED
+  REJECTED
+}
+
+model Counter {
+  name  String @id
+  value Int
+}
+
+model Agreement {
+  id                String @id @default(uuid())
+  agreementNumber   String @unique
+
+  title             String
+  content           String
+
+  status            AgreementStatus @default(DRAFT)
+
+  type              AgreementType?
+
+  hash              String?
+
+  senderId          String
+  receiverId        String
+
+  senderSigned      Boolean @default(false)
+  receiverSigned    Boolean @default(false)
+
+  senderSignature   String?
+  receiverSignature String?
+
+  senderSignedAt    DateTime?
+  receiverSignedAt  DateTime?
+
+  createdAt         DateTime @default(now())
+
+  sender            User @relation("Sender", fields: [senderId], references: [id])
+  receiver          User @relation("Receiver", fields: [receiverId], references: [id])
+}
