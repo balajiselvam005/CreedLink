@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import CreatorCard from "@/app/components/ui/CreatorCard";
 import { apiFetch } from "@/app/lib/api";
+import { useAuth } from "../context/AuthContext";
 
 interface Creator {
   id: string;
@@ -13,9 +14,13 @@ interface Creator {
 }
 
 export default function ExploreCreators() {
+
+  const user = useAuth().user;
+
   const [creators, setCreators] = useState<Creator[]>([]);
   const [search, setSearch] = useState("");
   const [role, setRole] = useState("all");
+  let i = 1;
 
   useEffect(() => {
     const loadCreators = async () => {
@@ -67,14 +72,14 @@ export default function ExploreCreators() {
 
         {/* Creator Grid */}
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {creators.map((creator) => (
+          {creators.filter((creator) => creator.id != user?.id).map((creator) => (
             <CreatorCard
               key={creator.id}
               id={creator.id}
               fullName={creator.fullName}
               role={creator.role}
               followers="—"
-              rating={4.8}
+              rating={4.8 + (i++)}
               imageUrl={creator.avatar}
             />
           ))}

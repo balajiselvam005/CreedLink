@@ -20,6 +20,7 @@ import Card from "@/app/components/ui/Card";
 import Button from "@/app/components/ui/Button";
 import Input from "@/app/components/ui/Input";
 import { apiFetch } from "@/app/lib/api";
+import { useAuth } from "@/app/context/AuthContext";
 
 type FilterTab =
   | "all"
@@ -51,13 +52,15 @@ export default function MyAgreements() {
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [agreements, setAgreements] = useState<Agreement[]>([]);
 
+  const user = useAuth().user;
+  
   useEffect(() => {
     const loadAgreements = async () => {
       try {
         const data = await apiFetch("/api/agreements");
 
         const mapped = data.map((a: any) => {
-          const isSender = a.senderId === a.sender.id;
+          const isSender = a.senderId === user?.id;
 
           const direction = isSender ? "sent" : "received";
 
@@ -307,22 +310,20 @@ export default function MyAgreements() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2 whitespace-nowrap transition-all ${
-                isActive
+              className={`flex items-center gap-2 rounded-xl px-4 py-2 whitespace-nowrap transition-all ${isActive
                   ? "bg-linear-to-r from-purple-500 to-blue-500 text-white shadow-lg shadow-purple-500/20"
                   : tab.highlight
                     ? "border border-orange-500/30 bg-orange-500/10 text-orange-400 hover:bg-orange-500/20"
                     : "border border-white/10 bg-slate-900 text-slate-400 hover:bg-white/5"
-              }`}
+                }`}
             >
               <Icon className="h-4 w-4" />
               <span className="text-sm font-medium">{tab.label}</span>
               <Badge
-                className={`${
-                  isActive
+                className={`${isActive
                     ? "border-white/30 bg-white/20 text-white"
                     : "border-slate-700 bg-slate-800 text-slate-300"
-                } border text-xs`}
+                  } border text-xs`}
               >
                 {tab.count}
               </Badge>
@@ -398,9 +399,8 @@ export default function MyAgreements() {
               {filteredAgreements.map((agreement, index) => (
                 <tr
                   key={agreement.id}
-                  className={`border-b border-white/5 transition-colors hover:bg-white/5 ${
-                    index === filteredAgreements.length - 1 ? "border-b-0" : ""
-                  } ${agreement.urgent ? "bg-orange-500/5" : ""}`}
+                  className={`border-b border-white/5 transition-colors hover:bg-white/5 ${index === filteredAgreements.length - 1 ? "border-b-0" : ""
+                    } ${agreement.urgent ? "bg-orange-500/5" : ""}`}
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">

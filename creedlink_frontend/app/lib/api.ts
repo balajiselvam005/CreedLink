@@ -1,6 +1,6 @@
 const BASE_URL = "http://localhost:5000";
 
-export async function apiFetch(endpoint: string, options: RequestInit = {}) {
+export async function apiFetch(endpoint: string, options: RequestInit = {}, retry = true) {
   const token = localStorage.getItem("accessToken");
 
   const res = await fetch(`${BASE_URL}${endpoint}`, {
@@ -13,7 +13,7 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
     },
   });
 
-  if (res.status === 401 || res.status === 403) {
+  if ((res.status === 401 || res.status === 403) && retry) {
     const refreshRes = await fetch(`${BASE_URL}/api/auth/refresh`, {
       method: "POST",
       credentials: "include",

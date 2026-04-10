@@ -18,7 +18,7 @@ export const addWork = async (req: Request, res: Response) => {
 };
 
 export const getWorks = async (req: Request, res: Response) => {
-  const userId = (req as any).userId;
+  const userId = req.params.id as string;
 
   const works = await prisma.work.findMany({
     where: { userId },

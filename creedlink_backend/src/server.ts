@@ -8,6 +8,7 @@ import skillRoutes from "./routes/skill.routes.js";
 import workRoutes from "./routes/work.routes.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import followRoutes from "./routes/follow.routes.js";
 
 const app = express();
 app.use(
@@ -20,12 +21,12 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
-app.use("/api", dashboardRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/agreements", agreementRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api", dashboardRoutes);
 app.use("/api/skills", skillRoutes);
+app.use("/api/follow", followRoutes);
 app.use("/api/works", workRoutes);
 
 app.listen(5000, () => {

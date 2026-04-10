@@ -167,7 +167,7 @@ export const me = async (req: Request, res: Response) => {
         instagram: true,
         portfolio: true,
         profileCompleted: true,
-        createdAt: true,
+        createdAt: true
       },
     });
 

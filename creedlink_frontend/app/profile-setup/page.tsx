@@ -87,7 +87,7 @@ export default function ProfileSetup() {
       if (!res.ok) {
         const err = await res.json();
         console.error("Avatar upload failed:", err);
-        return false;
+        throw new Error("Avatar upload failed");
       }
       return true;
     } catch (err) {

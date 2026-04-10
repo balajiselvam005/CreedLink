@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Star,
   UsersRound,
@@ -15,6 +15,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import Avatar from "@/app/components/ui/Avatar";
 import { useRouter } from "next/navigation";
 import AddSkillModal from "../components/ui/AddSkillModal";
+import { apiFetch } from "../lib/api";
 
 export default function MyProfile() {
   const { user } = useAuth();
@@ -23,18 +24,52 @@ export default function MyProfile() {
 
   const [skillModal, setSkillModal] = useState(false);
 
-  const [skills, setSkills] = useState([
-    "Video Editing",
-    "Color Grading",
-    "Motion Graphics",
-  ]);
+  const [skills, setSkills] = useState<any[]>([]);
+  const [works, setWorks] = useState<any[]>([]);
 
-  const [works, setWorks] = useState([
-    { title: "Tech Review Series", client: "TechGuru", year: 2025 },
-    { title: "Travel Documentary", client: "Wanderlust TV", year: 2025 },
-  ]);
+  const [rating, setRating] = useState(0);
+  const [followers, setFollowers] = useState(0);
 
-  if (!user) return null;
+  useEffect(() => {
+  const loadStats = async () => {
+    try {
+      if (!user?.id) return;
+
+      const ratingData = await apiFetch(`/api/users/${user.id}/rating`);
+      const followData = await apiFetch(`/api/follow/${user.id}/followers`);
+
+      setRating(ratingData.average || 0);
+      setFollowers(followData.followers || 0);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  loadStats();
+}, [user]);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        if (!user?.id) return;
+
+        const skillsData = await apiFetch(`/api/skills/${user.id}`);
+        const worksData = await apiFetch(`/api/works/${user.id}`);
+
+        setSkills(skillsData);
+        setWorks(worksData);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadData();
+  }, [user]);
+
+  if (!user) {
+    return <div className="text-center p-10">Loading...</div>;
+  }
+
 
   return (
     <div className="min-h-screen w-full bg-linear-to-br from-slate-950 via-slate-900 to-slate-950">
@@ -70,12 +105,12 @@ export default function MyProfile() {
               <div className="mt-5 flex justify-center gap-4 text-sm">
                 <div className="flex items-center gap-2">
                   <Star className="fill-yellow-500 text-yellow-400" size={16} />
-                  4.9
+                  {rating ? rating.toFixed(1) : "0.0"}
                 </div>
 
                 <div className="flex items-center gap-2 text-slate-400">
                   <UsersRound size={16} />
-                  12K
+                  {followers}
                 </div>
               </div>
 
@@ -85,15 +120,10 @@ export default function MyProfile() {
 
               {/* Buttons */}
               <div className="mt-6 flex flex-col gap-3">
-                <button className="rounded-xl bg-indigo-600 py-2 text-sm font-medium transition hover:bg-indigo-700">
-                  Collaborate
-                </button>
-
-                <button className="rounded-xl border border-white/10 py-2 text-sm transition hover:bg-white/5">
-                  Message
-                </button>
-
-                <button className="rounded-xl border border-white/10 py-2 text-sm transition hover:bg-white/5">
+                <button
+                  onClick={() => router.push("/my-agreements")}
+                  className="rounded-xl border border-white/10 py-2 text-sm transition hover:bg-white/5"
+                >
                   View Agreements
                 </button>
 
@@ -149,17 +179,24 @@ export default function MyProfile() {
                 <AddSkillModal
                   open={skillModal}
                   onClose={() => setSkillModal(false)}
-                  onAdd={(skill) => setSkills([...skills, skill])}
+                  onAdd={async (skill) => {
+                    const newSkill = await apiFetch("/api/skills", {
+                      method: "POST",
+                      body: JSON.stringify({ name: skill }),
+                    });
+
+                    setSkills((prev) => [...prev, newSkill]);
+                  }}
                 />
               </div>
 
               <div className="flex flex-wrap gap-3">
                 {skills.map((skill) => (
                   <span
-                    key={skill}
+                    key={skill.id}
                     className="rounded-full border border-indigo-500/20 bg-indigo-500/10 px-4 py-1 text-sm text-indigo-300"
                   >
-                    {skill}
+                    {skill.name}
                   </span>
                 ))}
               </div>
@@ -191,7 +228,7 @@ export default function MyProfile() {
               <div className="space-y-3">
                 {works.map((w) => (
                   <div
-                    key={w.title}
+                    key={w.id}
                     className="flex justify-between rounded-xl bg-slate-800 px-4 py-3"
                   >
                     <div>

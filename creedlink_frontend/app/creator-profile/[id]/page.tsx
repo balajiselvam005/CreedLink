@@ -16,6 +16,7 @@ import { useParams } from "next/navigation";
 import { apiFetch } from "@/app/lib/api";
 import Avatar from "@/app/components/ui/Avatar";
 import BackButton from "@/app/components/ui/BackButton";
+import { useAuth } from "@/app/context/AuthContext";
 
 interface Creator {
   id: string;
@@ -31,26 +32,77 @@ interface Creator {
 }
 
 export default function CreatorProfile() {
+  const {user} = useAuth()
   const params = useParams();
   const id = params.id as string;
 
   const [creator, setCreator] = useState<Creator | null>(null);
   const [skills, setSkills] = useState([]);
   const [works, setWorks] = useState([]);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followers, setFollowers] = useState(0);
+  const [rating, setRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [reviews, setReviews] = useState([]);
 
   useEffect(() => {
-    const load = async () => {
-      const data = await apiFetch(`/api/users/${id}`);
-      const skillsData = await apiFetch(`/api/skills/${id}`);
-      const worksData = await apiFetch(`/api/works/${id}`);
+  const loadAll = async () => {
+    try {
+      const [
+        userData,
+        skillsData,
+        worksData,
+        followData,
+        statusData,
+        ratingData,
+        reviewData,
+      ] = await Promise.all([
+        apiFetch(`/api/users/${id}`),
+        apiFetch(`/api/skills/${id}`),
+        apiFetch(`/api/works/${id}`),
+        apiFetch(`/api/follow/${id}/followers`),
+        apiFetch(`/api/follow/status/${id}`),
+        apiFetch(`/api/users/${id}/rating`),
+        apiFetch(`/api/users/${id}/reviews`),
+      ]);
 
+      setCreator(userData);
       setSkills(skillsData);
       setWorks(worksData);
-      setCreator(data);
-    };
+      setFollowers(followData.followers);
+      setIsFollowing(statusData.isFollowing);
+      setRating(ratingData.average);
+      setTotalReviews(ratingData.total);
+      setReviews(reviewData);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
-    if (id) load();
-  }, [id]);
+  if (id) loadAll();
+}, [id]);
+
+  const toggleFollow = async () => {
+    try {
+      if (isFollowing) {
+        await apiFetch("/api/follow", {
+          method: "DELETE",
+          body: JSON.stringify({ followingId: id }),
+        });
+        setFollowers((f) => f - 1);
+      } else {
+        await apiFetch("/api/follow", {
+          method: "POST",
+          body: JSON.stringify({ followingId: id }),
+        });
+        setFollowers((f) => f + 1);
+      }
+
+      setIsFollowing(!isFollowing);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   if (!creator) {
     return (
@@ -88,11 +140,12 @@ export default function CreatorProfile() {
               <div className="mt-5 flex justify-center gap-4 text-sm">
                 <div className="flex items-center gap-2">
                   <Star className="fill-yellow-500 text-yellow-400" size={16} />
-                  4.8
+                    {rating} ({totalReviews})
                 </div>
 
                 <div className="flex items-center gap-2 text-slate-400">
-                  <UsersRound size={16} />—
+                  <UsersRound size={16} />
+                  {followers}
                 </div>
               </div>
 
@@ -102,9 +155,14 @@ export default function CreatorProfile() {
 
               {/* ACTION BUTTONS */}
               <div className="mt-6 flex w-full flex-col gap-3">
-                <button className="rounded-xl bg-indigo-600 py-2 text-sm font-medium transition hover:bg-indigo-700">
-                  Collaborate
-                </button>
+                {user?.id !== id && (
+                  <button
+                    onClick={toggleFollow}
+                    className="rounded-xl bg-indigo-600 py-2"
+                  >
+                    {isFollowing ? "Unfollow" : "Follow"}
+                  </button>
+                )}
 
                 <button className="rounded-xl border border-white/10 py-2 text-sm transition hover:bg-white/5">
                   Message

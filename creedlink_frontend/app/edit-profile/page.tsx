@@ -87,7 +87,7 @@ export default function ProfileSettings() {
       if (!res.ok) {
         const err = await res.json();
         console.error("Avatar upload failed:", err);
-        return false;
+        throw new Error("Avatar upload failed");
       }
       return true;
     } catch (err) {
@@ -206,7 +206,11 @@ export default function ProfileSettings() {
 
           {/* AVATAR */}
           <div className="mb-8 flex items-center gap-6">
-            <Avatar size={80} fullName={user.fullName} imageUrl={previewUrl} />
+            <Avatar
+              size={90}
+              fullName={user.fullName}
+              imageUrl={user.avatar}
+            />
             <div>
               <label
                 htmlFor="avatar-upload"
